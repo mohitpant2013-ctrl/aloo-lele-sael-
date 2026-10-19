@@ -1,0 +1,62 @@
+name: Build projects
+
+on:
+  push:
+  workflow_dispatch:
+    inputs:
+      project:
+        description: 'Project folder name (or "all")'
+        required: false
+        default: 'all'
+
+jobs:
+  find:
+    runs-on: ubuntu-latest
+    outputs:
+      projects: ${{ steps.list.outputs.projects }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: list
+        env:
+          CHOSEN: ${{ github.event.inputs.project }}
+        run: |
+          if [ -n "$CHOSEN" ] && [ "$CHOSEN" != "all" ]; then
+            list=$(jq -c -n --arg p "$CHOSEN" '[$p]')
+          else
+            list=$(for d in projects/*/; do [ -f "${d}build.gradle" ] && basename "$d"; done | jq -R -s -c 'split("\n")[:-1]')
+          fi
+          echo "projects=$list" >> "$GITHUB_OUTPUT"
+          echo "Building: $list"
+
+  build:
+    needs: find
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        project: ${{ fromJSON(needs.find.outputs.projects) }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Read project settings
+        id: cfg
+        run: |
+          d="projects/${{ matrix.project }}"
+          echo "java=$(cat $d/java-version.txt 2>/dev/null || echo 17)" >> "$GITHUB_OUTPUT"
+          echo "gradle=$(cat $d/gradle-version.txt 2>/dev/null || echo 8.5)" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ steps.cfg.outputs.java }}
+
+      - uses: gradle/gradle-build-action@v2
+        with:
+          gradle-version: ${{ steps.cfg.outputs.gradle }}
+          build-root-directory: projects/${{ matrix.project }}
+          arguments: build --no-daemon
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.project }}
+          path: projects/${{ matrix.project }}/build/libs/*.jar
