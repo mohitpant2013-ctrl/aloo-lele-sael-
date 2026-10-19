@@ -1,0 +1,28 @@
+modLoader="javafml"
+loaderVersion="[36,)"
+license="MIT"
+
+[[mods]]
+modId="shieldstatuses"
+version="1.1.0"
+displayName="Shield Statuses (1.16.5 Forge)"
+authors="Original idea by Walksy, 1.16.5 Forge version"
+description='''
+Shows shield state: GREEN = ready to block, RED = disabled.
+Client side only - works in singleplayer, LAN and on any server (also 1.21 servers via ViaVersion).
+Config: config/shieldstatuses-client.toml
+'''
+
+[[dependencies.shieldstatuses]]
+    modId="forge"
+    mandatory=true
+    versionRange="[36,)"
+    ordering="NONE"
+    side="CLIENT"
+
+[[dependencies.shieldstatuses]]
+    modId="minecraft"
+    mandatory=true
+    versionRange="[1.16.5,1.17)"
+    ordering="NONE"
+    side="CLIENT"

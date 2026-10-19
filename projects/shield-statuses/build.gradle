@@ -1,0 +1,67 @@
+buildscript {
+    repositories {
+        maven { url = 'https://maven.minecraftforge.net' }
+        mavenCentral()
+    }
+    dependencies {
+        classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '5.1.+', changing: true
+    }
+}
+
+apply plugin: 'net.minecraftforge.gradle'
+apply plugin: 'java'
+
+version = '1.1.0-1.16.5'
+group = 'com.shieldstatuses'
+archivesBaseName = 'shieldstatuses-forge'
+
+sourceCompatibility = targetCompatibility = JavaVersion.VERSION_1_8
+
+// ShieldRendererHook (the shield drawing code) is already compiled in /prebuilt.
+// It is packed into the jar unchanged; everything else is normal source in src/main/java.
+sourceSets {
+    main {
+        resources {
+            srcDir 'prebuilt'
+        }
+    }
+}
+
+minecraft {
+    mappings channel: 'official', version: '1.16.5'
+
+    runs {
+        client {
+            workingDirectory project.file('run')
+            mods {
+                shieldstatuses {
+                    source sourceSets.main
+                }
+            }
+        }
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    minecraft 'net.minecraftforge:forge:1.16.5-36.2.39'
+    compileOnly files('prebuilt')
+}
+
+jar {
+    manifest {
+        attributes([
+            "Specification-Title"   : "shieldstatuses",
+            "Specification-Vendor"  : "shieldstatuses",
+            "Specification-Version" : "1",
+            "Implementation-Title"  : project.name,
+            "Implementation-Version": "${version}",
+            "Implementation-Vendor" : "shieldstatuses"
+        ])
+    }
+}
+
+jar.finalizedBy('reobfJar')
